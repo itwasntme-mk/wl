@@ -13,21 +13,37 @@ REGON_SEARCH_CALL = "/api/search/regon/{regon}"
 QUERY = { "date": date.today().isoformat() }
 
 
+def format_bank_account(bank_account):
+  str  = bank_account[0:2] + " "
+  str += bank_account[2:6] + " "
+  str += bank_account[6:10] + " "
+  str += bank_account[10:14] + " "
+  str += bank_account[14:18] + " "
+  str += bank_account[18:22] + " "
+  str += bank_account[22:26]
+  
+  return str
+
+
 def print_subject(subject):
-  print("NAZWA:            " + subject["name"]);
-  print("ADRES:            " + subject["workingAddress"]);
-  print("NIP:              " + subject["nip"]);
-  print("REGON:            " + subject["regon"]);
-  if subject["krs"]:
-    print("KRS:              " + subject["krs"]);
-  print("DATA REJESTRACJI: " + subject["registrationLegalDate"]);
-  print("STATUS VAT:       " + subject["statusVat"]);
-  print("KONTA BANKOWE:")
+  print("NAZWA:              " + subject["name"])
+  if subject["residenceAddress"] is not None:
+    print("ADRES ZAMIESZKANIA: " + subject["residenceAddress"])
+  if subject["workingAddress"] is not None:
+    print("ADRES FIRMY:        " + subject["workingAddress"])
+  print("NIP:                " + subject["nip"])
+  print("REGON:              " + subject["regon"])
+  if "krs" in subject and subject["krs"] is not None:
+    print("KRS:                " + subject["krs"])
+  print("DATA REJESTRACJI:   " + subject["registrationLegalDate"])
+  print("STATUS VAT:         " + subject["statusVat"])
   bank_accounts = subject["accountNumbers"]
-  for bank_account in bank_accounts:
-    print("                  " + bank_account[0:2] + " " + bank_account[2:6] + " " + bank_account[6:10] + " " +
-                                 bank_account[10:14] + " " + bank_account[14:18] + " " + bank_account[18:22] + " " +
-                                 bank_account[22:26])
+  if len(bank_accounts) == 1:
+    print("KONTO BANKOWE:      " + format_bank_account(bank_accounts[0]))
+  else:
+    print("KONTA BANKOWE:")
+    for bank_account in bank_accounts:
+      print("                    " + format_bank_account(bank_account))
 
 
 def main():
@@ -64,7 +80,10 @@ def main():
   response = requests.get(URL + SEARCH_CALL, params = QUERY)
   response.encoding = "utf-8"
   result = response.json()["result"]
-  if result["subjects"]:
+
+  #print(json.dumps(response.json(), indent = 2, sort_keys = True, ensure_ascii = False))
+
+  if "subjects" in result:
     array = result["subjects"]
     for subject in array:
       print_subject(subject)
@@ -72,9 +91,8 @@ def main():
   else:
     print_subject(result["subject"])
 
-  print("requestId:        " + result["requestId"]);
+  print("requestId:          " + result["requestId"]);
     
-  #print(json.dumps(response.json(), indent = 2, sort_keys = True, ensure_ascii = False))
 
 
 if __name__ == "__main__":
