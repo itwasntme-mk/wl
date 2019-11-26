@@ -37,13 +37,14 @@ def print_subject(subject):
     print("KRS:                " + subject["krs"])
   print("DATA REJESTRACJI:   " + subject["registrationLegalDate"])
   print("STATUS VAT:         " + subject["statusVat"])
-  bank_accounts = subject["accountNumbers"]
-  if len(bank_accounts) == 1:
-    print("KONTO BANKOWE:      " + format_bank_account(bank_accounts[0]))
-  else:
-    print("KONTA BANKOWE:")
-    for bank_account in bank_accounts:
-      print("                    " + format_bank_account(bank_account))
+  if "accountNumbers" in subject and subject["accountNumbers"] is not None:
+    bank_accounts = subject["accountNumbers"]
+    if len(bank_accounts) == 1:
+      print("KONTO BANKOWE:      " + format_bank_account(bank_accounts[0]))
+    else:
+      print("KONTA BANKOWE:")
+      for bank_account in bank_accounts:
+        print("                    " + format_bank_account(bank_account))
 
 
 def main():
