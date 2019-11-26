@@ -1,15 +1,7 @@
 import requests
 import json
-from datetime import date
 from argparse import ArgumentParser
 import wl_tools
-
-
-URL = "https://wl-api.mf.gov.pl"
-#URL = "https://wl-test.mf.gov.pl"
-NIP_CHECK_CALL = "/api/check/nip/{nip}/bank-account/{bank_account}"
-REGON_CHECK_CALL = "/api/check/regon/{regon}/bank-account/{bank_account}"
-QUERY = { "date": date.today().isoformat() }
 
 
 def main():
@@ -38,15 +30,15 @@ def main():
     nip = args.nip.replace("-", "")
     if not wl_tools.validate_nip(nip):
       exit("Invalid NIP")
-    CHECK_CALL = NIP_CHECK_CALL.format(nip = nip, bank_account = bank_account)
+    CHECK_CALL = wl_tools.NIP_CHECK_CALL.format(nip = nip, bank_account = bank_account)
   else:
     if not wl_tools.validate_regon(args.regon):
       exit("Invalid REGON")
-    CHECK_CALL = REGON_CHECK_CALL.format(regon = args.regon, bank_account = bank_account)
+    CHECK_CALL = wl_tools.REGON_CHECK_CALL.format(regon = args.regon, bank_account = bank_account)
 
   print(CHECK_CALL)
 
-  response = requests.get(URL + CHECK_CALL, params = QUERY)
+  response = requests.get(wl_tools.URL + CHECK_CALL, params = wl_tools.QUERY)
   response.encoding = "utf-8"
   
   result = response.json()["result"]

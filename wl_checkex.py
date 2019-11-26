@@ -1,14 +1,7 @@
 import requests
 import json
-from datetime import date
 from argparse import ArgumentParser
 import wl_tools
-
-
-URL = "https://wl-api.mf.gov.pl"
-#URL = "https://wl-test.mf.gov.pl"
-BANK_ACCOUNT_SEARCH_CALL = "/api/search/bank-account/{bank_account}"
-QUERY = { "date": date.today().isoformat() }
 
 
 def check_nip(subject, nip):
@@ -41,11 +34,11 @@ def main():
   if not wl_tools.validate_bank_account(bank_account):
     exit("Invalid bank account")
   else:
-    SEARCH_CALL = BANK_ACCOUNT_SEARCH_CALL.format(bank_account = bank_account)
+    SEARCH_CALL = wl_tools.BANK_ACCOUNT_SEARCH_CALL.format(bank_account = bank_account)
 
   print(SEARCH_CALL)
   
-  response = requests.get(URL + SEARCH_CALL, params = QUERY)
+  response = requests.get(wl_tools.URL + SEARCH_CALL, params = wl_tools.QUERY)
   response.encoding = "utf-8"
   result = response.json()["result"]
     

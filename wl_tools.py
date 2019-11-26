@@ -1,3 +1,16 @@
+from datetime import date
+
+
+URL = "https://wl-api.mf.gov.pl"
+#URL = "https://wl-test.mf.gov.pl"
+NIP_CHECK_CALL = "/api/check/nip/{nip}/bank-account/{bank_account}"
+REGON_CHECK_CALL = "/api/check/regon/{regon}/bank-account/{bank_account}"
+BANK_ACCOUNT_SEARCH_CALL = "/api/search/bank-account/{bank_account}"
+NIP_SEARCH_CALL = "/api/search/nip/{nip}"
+REGON_SEARCH_CALL = "/api/search/regon/{regon}"
+QUERY = { "date": date.today().isoformat() }
+
+
 def validate_nip(nip):
   weights = [ 6, 5, 7, 2, 3, 4, 5, 6, 7 ]
   result = 0

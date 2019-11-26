@@ -1,16 +1,7 @@
 import requests
 import json
-from datetime import date
 from argparse import ArgumentParser
 import wl_tools
-
-
-URL = "https://wl-api.mf.gov.pl"
-#URL = "https://wl-test.mf.gov.pl"
-BANK_ACCOUNT_SEARCH_CALL = "/api/search/bank-account/{bank_account}"
-NIP_SEARCH_CALL = "/api/search/nip/{nip}"
-REGON_SEARCH_CALL = "/api/search/regon/{regon}"
-QUERY = { "date": date.today().isoformat() }
 
 
 def format_bank_account(bank_account):
@@ -65,20 +56,20 @@ def main():
     nip = args.nip.replace("-", "")
     if not wl_tools.validate_nip(nip):
       exit("Invalid NIP")
-    SEARCH_CALL = NIP_SEARCH_CALL.format(nip = nip)
+    SEARCH_CALL = wl_tools.NIP_SEARCH_CALL.format(nip = nip)
   elif args.regon:
     if not wl_tools.validate_regon(args.regon):
       exit("Invalid REGON")
-    SEARCH_CALL = REGON_SEARCH_CALL.format(regon = args.regon)
+    SEARCH_CALL = wl_tools.REGON_SEARCH_CALL.format(regon = args.regon)
   else:
     bank_account = args.bank_account.replace(" ", "")
     if not wl_tools.validate_bank_account(bank_account):
       exit("Invalid bank account")
-    SEARCH_CALL = BANK_ACCOUNT_SEARCH_CALL.format(bank_account = bank_account)
+    SEARCH_CALL = wl_tools.BANK_ACCOUNT_SEARCH_CALL.format(bank_account = bank_account)
 
   print(SEARCH_CALL)
 
-  response = requests.get(URL + SEARCH_CALL, params = QUERY)
+  response = requests.get(wl_tools.URL + SEARCH_CALL, params = wl_tools.QUERY)
   response.encoding = "utf-8"
   result = response.json()["result"]
 
@@ -88,10 +79,10 @@ def main():
     array = result["subjects"]
     for subject in array:
       print_subject(subject)
-      print()
   else:
     print_subject(result["subject"])
 
+  print()
   print("requestId:          " + result["requestId"]);
     
 
