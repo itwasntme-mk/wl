@@ -1,13 +1,8 @@
 import requests
 import json
 from argparse import ArgumentParser
+from datetime import date
 import wl_tools
-
-
-URL = "https://wl-api.mf.gov.pl"
-#URL = "https://wl-test.mf.gov.pl"
-NIP_CHECK_CALL = "/api/check/nip/{nip}/bank-account/{bank_account}"
-REGON_CHECK_CALL = "/api/check/regon/{regon}/bank-account/{bank_account}"
 
 
 def check(bank_account, nip=None, regon=None):
@@ -23,16 +18,16 @@ def check(bank_account, nip=None, regon=None):
     nip = nip.replace("-", "")
     if not wl_tools.validate_nip(nip):
       raise ValueError("Invalid NIP.")
-    CHECK_CALL = NIP_CHECK_CALL.format(nip = nip, bank_account = bank_account)
+    CHECK_CALL = wl_tools.NIP_CHECK_CALL.format(nip = nip, bank_account = bank_account)
   else:
     if not wl_tools.validate_regon(regon):
       raise ValueError("Invalid REGON.")
-    CHECK_CALL = REGON_CHECK_CALL.format(regon = regon, bank_account = bank_account)
+    CHECK_CALL = wl_tools.REGON_CHECK_CALL.format(regon = regon, bank_account = bank_account)
 
   print(CHECK_CALL)
 
   query = { "date": date.today().isoformat() }
-  response = requests.get(URL + CHECK_CALL, params = query)
+  response = requests.get(wl_tools.URL + CHECK_CALL, params = query)
   result = response.json()["result"]
   #print(result)
   return (result["accountAssigned"] is not None and result["accountAssigned"] == "TAK", result["requestId"])
