@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 URL = "https://wl-api.mf.gov.pl"
 #URL = "https://wl-test.mf.gov.pl"
 NIP_CHECK_CALL = "/api/check/nip/{nip}/bank-account/{bank_account}"
