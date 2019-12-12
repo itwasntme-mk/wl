@@ -1,6 +1,5 @@
 import requests
 import json
-from datetime import date
 from argparse import ArgumentParser
 import wl_tools
 

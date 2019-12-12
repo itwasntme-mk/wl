@@ -1,6 +1,5 @@
 import requests
 import json
-from datetime import date
 from argparse import ArgumentParser
 import wl_tools
 
@@ -97,10 +96,10 @@ def main():
     array = result["subjects"]
     for subject in array:
       print_subject(subject)
-      print()
   else:
     print_subject(result["subject"])
 
+  print()
   print("requestId:          " + result["requestId"]);
     
 
