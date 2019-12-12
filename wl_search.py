@@ -10,7 +10,32 @@ URL = "https://wl-api.mf.gov.pl"
 BANK_ACCOUNT_SEARCH_CALL = "/api/search/bank-account/{bank_account}"
 NIP_SEARCH_CALL = "/api/search/nip/{nip}"
 REGON_SEARCH_CALL = "/api/search/regon/{regon}"
-QUERY = { "date": date.today().isoformat() }
+
+
+def search(bank_account=None, nip=None, regon=None):
+  if not nip and not regon and not bank_account:
+    raise ValueError("Missing nip/regon/bank_account.")
+
+  if nip:
+    nip = nip.replace("-", "")
+    if not wl_tools.validate_nip(nip):
+      raise ValueError("Invalid NIP.")
+    SEARCH_CALL = NIP_SEARCH_CALL.format(nip = nip)
+  elif regon:
+    if not wl_tools.validate_regon(regon):
+      raise ValueError("Invalid REGON.")
+    SEARCH_CALL = REGON_SEARCH_CALL.format(regon = regon)
+  else:
+    bank_account = bank_account.replace(" ", "")
+    if not wl_tools.validate_bank_account(bank_account):
+      raise ValueError("Invalid bank account.")
+    SEARCH_CALL = BANK_ACCOUNT_SEARCH_CALL.format(bank_account = bank_account)
+
+  print(SEARCH_CALL)
+
+  query = { "date": date.today().isoformat() }
+  response = requests.get(URL + SEARCH_CALL, params = query)
+  return response.json()
 
 
 def format_bank_account(bank_account):
@@ -57,30 +82,14 @@ def main():
   parser.add_argument("-b", "--bank_account", action="store", help="Specify bank account")
   
   args = parser.parse_args()
+  response = None
   
-  if not args.nip and not args.regon and not args.bank_account:
-    exit("Specify NIP, REGON or bank account")
-    
-  if args.nip:
-    nip = args.nip.replace("-", "")
-    if not wl_tools.validate_nip(nip):
-      exit("Invalid NIP")
-    SEARCH_CALL = NIP_SEARCH_CALL.format(nip = nip)
-  elif args.regon:
-    if not wl_tools.validate_regon(args.regon):
-      exit("Invalid REGON")
-    SEARCH_CALL = REGON_SEARCH_CALL.format(regon = args.regon)
-  else:
-    bank_account = args.bank_account.replace(" ", "")
-    if not wl_tools.validate_bank_account(bank_account):
-      exit("Invalid bank account")
-    SEARCH_CALL = BANK_ACCOUNT_SEARCH_CALL.format(bank_account = bank_account)
-
-  print(SEARCH_CALL)
-
-  response = requests.get(URL + SEARCH_CALL, params = QUERY)
-  response.encoding = "utf-8"
-  result = response.json()["result"]
+  try:
+    response = search(args.bank_account, args.nip, args.regon)
+  except ValueError as ve:
+    exit(ve)
+  
+  result = response["result"]
 
   #print(json.dumps(response.json(), indent = 2, sort_keys = True, ensure_ascii = False))
 

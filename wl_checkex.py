@@ -8,7 +8,6 @@ import wl_tools
 URL = "https://wl-api.mf.gov.pl"
 #URL = "https://wl-test.mf.gov.pl"
 BANK_ACCOUNT_SEARCH_CALL = "/api/search/bank-account/{bank_account}"
-QUERY = { "date": date.today().isoformat() }
 
 
 def check_nip(subject, nip):
@@ -17,6 +16,48 @@ def check_nip(subject, nip):
 
 def check_regon(subject, regon):
   return subject["regon"] == regon
+
+
+def check(bank_account, nip=None, regon=None):
+  if not nip and not regon or not bank_account:
+    raise ValueError("Missing nip/regon or bank_account.")
+
+  bank_account = bank_account.replace(" ", "")
+    
+  if not wl_tools.validate_bank_account(bank_account):
+    raise ValueError("Invalid bank account.")
+    
+  SEARCH_CALL = BANK_ACCOUNT_SEARCH_CALL.format(bank_account = bank_account)
+
+  print(SEARCH_CALL)
+  
+  query = { "date": date.today().isoformat() }
+  response = requests.get(URL + SEARCH_CALL, params = query)
+  result = response.json()["result"]
+  
+  #print(result)
+    
+  if nip:
+    nip = nip.replace("-", "")
+    if not wl_tools.validate_nip(nip):
+      raise ValueError("Invalid NIP")
+    if result["subjects"] is not None:
+      for subject in result["subjects"]:
+        if check_nip(subject, nip):
+          return (True, result["requestId"])
+    elif result["subject"] is not None:
+      return (check_nip(result["subject"], nip), result["requestId"])
+  else:
+    if not wl_tools.validate_regon(regon):
+      raise ValueError("Invalid REGON")
+    if result["subjects"] is not None:
+      for subject in result["subjects"]:
+        if check_regon(subject, regon):
+          return (True, result["requestId"])
+    elif result["subject"] is not None:
+      return (check_regon(result["subject"], regon), result["requestId"])
+
+  return (False, result["requestId"])
 
 
 def main():
@@ -29,62 +70,21 @@ def main():
   parser.add_argument("-b", "--bank_account", action="store", help="Specify bank account")
   
   args = parser.parse_args()
+  result = None
+  requestId = None
   
-  if not args.nip and not args.regon:
-    exit("Specify NIP or REGON + bank account")
-    
-  if not args.bank_account:
-    exit("Specify bank account")
-  else:
-    bank_account = args.bank_account.replace(" ", "")
-    
-  if not wl_tools.validate_bank_account(bank_account):
-    exit("Invalid bank account")
-  else:
-    SEARCH_CALL = BANK_ACCOUNT_SEARCH_CALL.format(bank_account = bank_account)
+  try:
+    (result, requestId) = check(args.bank_account, args.nip, args.regon)
+  except ValueError as ve:
+    exit(ve)
 
-  print(SEARCH_CALL)
+  if result:
+    print("accountAssigned: TAK");
+  else:
+    print("accountAssigned: NIE");
+
+  print("requestId:       " + requestId);
   
-  response = requests.get(URL + SEARCH_CALL, params = QUERY)
-  response.encoding = "utf-8"
-  result = response.json()["result"]
-    
-  if args.nip:
-    nip = args.nip.replace("-", "")
-    if not wl_tools.validate_nip(nip):
-      exit("Invalid NIP")
-    if result["subjects"]:
-      for subject in result["subjects"]:
-        if check_nip(subject, nip):
-          print("accountAssigned: TAK");
-          break
-      else:
-        print("accountAssigned: NIE");
-    else:
-      if check_nip(result["subject"], nip):
-        print("accountAssigned: TAK");
-      else:
-        print("accountAssigned: NIE");
-  else:
-    if not wl_tools.validate_regon(args.regon):
-      exit("Invalid REGON")
-    if result["subjects"]:
-      for subject in result["subjects"]:
-        if check_regon(subject, args.regon):
-          print("accountAssigned: TAK");
-          break
-      else:
-        print("accountAssigned: NIE");
-    else:
-      if check_regon(result["subject"], args.regon):
-        print("accountAssigned: TAK");
-      else:
-        print("accountAssigned: NIE");
-
-  print("requestId:       " + result["requestId"]);
-  
-  #print(json.dumps(response.json(), indent = 2, sort_keys = True, ensure_ascii = False))
-
 
 if __name__ == "__main__":
   main()

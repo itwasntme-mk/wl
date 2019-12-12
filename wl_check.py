@@ -9,7 +9,34 @@ URL = "https://wl-api.mf.gov.pl"
 #URL = "https://wl-test.mf.gov.pl"
 NIP_CHECK_CALL = "/api/check/nip/{nip}/bank-account/{bank_account}"
 REGON_CHECK_CALL = "/api/check/regon/{regon}/bank-account/{bank_account}"
-QUERY = { "date": date.today().isoformat() }
+
+
+def check(bank_account, nip=None, regon=None):
+  if not nip and not regon or not bank_account:
+    raise ValueError("Missing nip/regon or bank_account.")
+
+  bank_account = bank_account.replace(" ", "")
+    
+  if not wl_tools.validate_bank_account(bank_account):
+    raise ValueError("Invalid bank account.")
+    
+  if nip:
+    nip = nip.replace("-", "")
+    if not wl_tools.validate_nip(nip):
+      raise ValueError("Invalid NIP.")
+    CHECK_CALL = NIP_CHECK_CALL.format(nip = nip, bank_account = bank_account)
+  else:
+    if not wl_tools.validate_regon(regon):
+      raise ValueError("Invalid REGON.")
+    CHECK_CALL = REGON_CHECK_CALL.format(regon = regon, bank_account = bank_account)
+
+  print(CHECK_CALL)
+
+  query = { "date": date.today().isoformat() }
+  response = requests.get(URL + CHECK_CALL, params = query)
+  result = response.json()["result"]
+  #print(result)
+  return (result["accountAssigned"] is not None and result["accountAssigned"] == "TAK", result["requestId"])
 
 
 def main():
@@ -28,30 +55,20 @@ def main():
     
   if not args.bank_account:
     exit("Specify bank account")
-  else:
-    bank_account = args.bank_account.replace(" ", "")
-    
-  if not wl_tools.validate_bank_account(bank_account):
-    exit("Invalid bank account")
-    
-  if args.nip:
-    nip = args.nip.replace("-", "")
-    if not wl_tools.validate_nip(nip):
-      exit("Invalid NIP")
-    CHECK_CALL = NIP_CHECK_CALL.format(nip = nip, bank_account = bank_account)
-  else:
-    if not wl_tools.validate_regon(args.regon):
-      exit("Invalid REGON")
-    CHECK_CALL = REGON_CHECK_CALL.format(regon = args.regon, bank_account = bank_account)
 
-  print(CHECK_CALL)
+  result = None
+  requestId = None
 
-  response = requests.get(URL + CHECK_CALL, params = QUERY)
-  response.encoding = "utf-8"
-  
-  result = response.json()["result"]
-  print("accountAssigned: " + result["accountAssigned"]);
-  print("requestId:       " + result["requestId"]);
+  try:
+    (result, requestId) = check(args.bank_account, args.nip, args.regon)
+  except ValueError as ve:
+    exit(ve)
+
+  if result:
+    print("accountAssigned: TAK");
+  else:
+    print("accountAssigned: NIE");
+  print("requestId:       " + requestId);
   
   #print(json.dumps(response.json(), indent = 2, sort_keys = True, ensure_ascii = False))
 
